@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "espress": "^0.0.0",
+    "express": "^5.2.1",
+    "joi": "^18.0.2",
+    "mysql2": "^3.19.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
