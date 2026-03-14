@@ -3,17 +3,13 @@ const bcrypt = require("bcrypt");
 const Joi = require("joi");
 const cors = require("cors");
 
-const db = require("./db"); // importa conexão
+const db = require("./db");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-
-// =========================
-// USUARIOS
-// =========================
 
 // criar usuario
 app.post("/usuarios", async (req, res) => {
@@ -96,10 +92,7 @@ app.get("/usuarios/:id", async (req, res) => {
 // });
 
 
-// =========================
-// LOGIN
-// =========================
-
+//login
 app.post("/login", async (req, res) => {
 
   try {
@@ -120,17 +113,17 @@ app.post("/login", async (req, res) => {
     let senhaValida = false;
 
 
-    // se a senha já for hash bcrypt
+    
     if (senhaBanco.startsWith("$2")) {
 
       senhaValida = await bcrypt.compare(senha, senhaBanco);
 
     } else {
 
-      // senha antiga salva em texto
+     
       senhaValida = senha === senhaBanco;
 
-      // se acertou, atualizar para hash
+  
       if (senhaValida) {
 
         const hash = await bcrypt.hash(senha, 10);
@@ -161,10 +154,6 @@ app.post("/login", async (req, res) => {
 
 });
 
-
-// =========================
-// LOCAIS
-// =========================
 
 // criar local
 // app.post("/locais", async (req,res)=>{
@@ -229,10 +218,6 @@ app.get("/locais", async (req, res) => {
 // });
 
 
-// =========================
-// ITENS
-// =========================
-
 // criar item
 app.post("/itens", async (req, res) => {
 
@@ -274,7 +259,6 @@ app.get("/itens", async (req, res) => {
 //     res.json(rows);
 // });
 
-
 // atualizar item
 app.put("/itens/:id", async (req, res) => {
 
@@ -288,7 +272,6 @@ app.put("/itens/:id", async (req, res) => {
   res.json({ mensagem: "item atualizado" });
 });
 
-
 // deletar item
 app.delete("/itens/:id", async (req, res) => {
 
@@ -301,10 +284,7 @@ app.delete("/itens/:id", async (req, res) => {
 });
 
 
-// =========================
-// ITENS DE UM LOCAL
-// =========================
-
+//itens de um local
 app.get("/locais/:codigo/itens", async (req, res) => {
 
   const [rows] = await db.execute(
@@ -315,10 +295,6 @@ app.get("/locais/:codigo/itens", async (req, res) => {
   res.json(rows);
 });
 
-
-// =========================
-// SERVER
-// =========================
 
 app.listen(3000, () => {
   console.log("Servidor rodando em http://localhost:3000");
