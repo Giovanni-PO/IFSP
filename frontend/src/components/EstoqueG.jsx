@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../App.css'; // usa o mesmo CSS do Home
 
 const EstoqueG = () => {
   const [itens, setItens] = useState([]);
@@ -8,6 +9,7 @@ const EstoqueG = () => {
   const [filtroLocal, setFiltroLocal] = useState('');
   const [itensFiltrados, setItensFiltrados] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [menuAberto, setMenuAberto] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,7 +42,6 @@ const EstoqueG = () => {
 
   const filtrarItens = () => {
     let filtrados = itens;
-
     if (filtroNome) {
       filtrados = filtrados.filter(item => 
         item.nome.toLowerCase().includes(filtroNome.toLowerCase())
@@ -49,7 +50,6 @@ const EstoqueG = () => {
     if (filtroLocal) {
       filtrados = filtrados.filter(item => item.localizacao === filtroLocal);
     }
-
     setItensFiltrados(filtrados);
   };
 
@@ -58,26 +58,54 @@ const EstoqueG = () => {
   };
 
   if (carregando) {
-    return <div>Carregando estoque...</div>;
+    return (
+      <div className="loading">
+        <h1>Carregando Estoque Geral...</h1>
+        <p>Conectando com backend...</p>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <h1>Controle de Estoque Geral IFSP</h1>
-      
-      <div>
-        <input
-          type="text"
-          placeholder="Filtrar por nome do item"
-          value={filtroNome}
-          onChange={(e) => setFiltroNome(e.target.value)}
-          style={{ marginRight: '10px', padding: '5px' }}
-        />
-        
+    <div className="home-container">
+
+      {/* HEADER */}
+      <header className="header">
+        <div className="header-left">
+          <img src="/LogoIFSP.jpg" alt="Logo IFSP" />
+          <h1>IFSP</h1>
+        </div>
+
+        <div className="header-center">
+          <input
+            type="text"
+            placeholder="🔍 Buscar item do estoque..."
+            value={filtroNome}
+            onChange={(e) => setFiltroNome(e.target.value)}
+          />
+        </div>
+
+        <div className="header-right">
+          <button className="menu-btn" onClick={() => setMenuAberto(true)}>☰</button>
+        </div>
+      </header>
+
+      {/* MENU LATERAL */}
+      <div className={`side-menu-overlay ${menuAberto ? 'active' : ''}`} onClick={() => setMenuAberto(false)}>
+        <div className={`side-menu ${menuAberto ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <button className="close-btn" onClick={() => setMenuAberto(false)}>×</button>
+          <h3>Menu</h3>
+          <button onClick={voltarInicio}>🏠 Início</button>
+          <button onClick={carregarDados}>🔄 Atualizar Estoque</button>
+        </div>
+      </div>
+
+      {/* FILTROS */}
+      <div className="top-bar">
         <select 
           value={filtroLocal} 
           onChange={(e) => setFiltroLocal(e.target.value)}
-          style={{ marginRight: '10px', padding: '5px' }}
+          style={{ padding: '10px', borderRadius: '10px', border: '1px solid #ccc' }}
         >
           <option value="">Todas as localizações</option>
           {locais.map(local => (
@@ -86,42 +114,25 @@ const EstoqueG = () => {
             </option>
           ))}
         </select>
-
-        <button onClick={carregarDados} style={{ padding: '5px 10px' }}>
-          Atualizar
-        </button>
-
-        <button onClick={voltarInicio} style={{ padding: '5px 10px', marginLeft: '10px' }}>
-          Voltar ao Início
-        </button>
       </div>
 
-      <div>
-        <h2>Estoque Completo</h2>
-        <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Etiqueta</th>
-              <th>Nome</th>
-              <th>Definição</th>
-              <th>Descrição</th>
-              <th>Localização</th>
-            </tr>
-          </thead>
-          <tbody>
-            {itensFiltrados.map(item => (
-              <tr key={item.id}>
-                <td>{item.codigo}</td>
-                <td>{item.etiqueta ? 'Sim' : 'Não'}</td>
-                <td>{item.nome}</td>
-                <td>{item.definicao}</td>
-                <td>{item.descricao}</td>
-                <td>{item.localizacao}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* GRID DE ITENS */}
+      <div className="grid-locais" style={{ marginTop: '20px' }}>
+        {itensFiltrados.length === 0 && (
+          <div className="vazio">
+            <p>Nenhum item encontrado</p>
+          </div>
+        )}
+        {itensFiltrados.map(item => (
+          <div className="card-local" key={item.id}>
+            <h3>{item.nome}</h3>
+            <p><strong>Código:</strong> {item.codigo}</p>
+            <p><strong>Etiqueta:</strong> {item.etiqueta ? 'Sim' : 'Não'}</p>
+            <p><strong>Definição:</strong> {item.definicao}</p>
+            <p><strong>Descrição:</strong> {item.descricao}</p>
+            <p><strong>Localização:</strong> {item.localizacao}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
