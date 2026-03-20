@@ -285,15 +285,20 @@ app.delete("/itens/:id", async (req, res) => {
 
 
 //itens de um local
-app.get("/locais/:codigo/itens", async (req, res) => {
-
-  const [rows] = await db.execute(
-    "SELECT * FROM Itens WHERE localizacao=?",
-    [req.params.codigo]
-  );
-
-  res.json(rows);
+app.get("/locais/:codigo/itens", async (req, res, next) => {
+  try {
+    const codigo = req.params.codigo;
+    const [rows] = await db.execute(
+      "SELECT * FROM Itens WHERE localizacao = ? ORDER BY codigo", 
+      [codigo]
+    );
+    console.log(`Estoque ${codigo}: ${rows.length} itens`);
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
 });
+
 
 
 app.listen(3000, () => {

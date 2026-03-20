@@ -1,13 +1,15 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom/client';  // ← ESTAVA FALTANDO ISSO!
 import './index.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import Page1 from './components/Page1.jsx';
-import Page2 from './components/Page2.jsx';
+import Home from './components/Home.jsx';
+import EstoqueG from './components/EstoqueG.jsx';
+import EstoqueLocal from './components/EstoqueLocal.jsx';
 
 const router = createBrowserRouter([
-  { path: "/", element: <Page1 /> },
-  { path: "/estoque", element: <Page2 /> }
+  { path: "/", element: <Home /> },
+  { path: "/estoque", element: <EstoqueG /> },
+  { path: "/estoque/:codigo", element: <EstoqueLocal /> }
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
