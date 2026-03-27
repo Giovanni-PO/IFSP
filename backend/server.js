@@ -11,11 +11,11 @@ app.use(cors());
 app.use(express.json());
 
 
+/* ================= USUÁRIOS ================= */
+
 // criar usuario
 app.post("/usuarios", async (req, res) => {
-
   try {
-
     const schema = Joi.object({
       nome_usuario: Joi.string().required(),
       email: Joi.string().email().required(),
@@ -39,7 +39,6 @@ app.post("/usuarios", async (req, res) => {
     res.json({ mensagem: "usuario criado" });
 
   } catch (err) {
-
     if (err.code === "ER_DUP_ENTRY") {
       return res.status(400).json({
         erro: "email ou nome de usuario já existe"
@@ -47,56 +46,13 @@ app.post("/usuarios", async (req, res) => {
     }
 
     console.error(err);
-
-    res.status(500).json({
-      erro: "erro interno no servidor"
-    });
-
+    res.status(500).json({ erro: "erro interno no servidor" });
   }
-
 });
 
-
-// listar usuarios
-app.get("/usuarios", async (req, res) => {
-
-  const [rows] = await db.execute(
-    "SELECT id,nome_usuario,email FROM Usuarios"
-  );
-
-  res.json(rows);
-});
-
-
-// usuario por id
-app.get("/usuarios/:id", async (req, res) => {
-
-  const [rows] = await db.execute(
-    "SELECT id,nome_usuario,email FROM Usuarios WHERE id=?",
-    [req.params.id]
-  );
-
-  res.json(rows);
-});
-
-
-// deletar usuario
-// app.delete("/usuarios/:id", async (req,res)=>{
-
-//     await db.execute(
-//         "DELETE FROM Usuarios WHERE id=?",
-//         [req.params.id]
-//     );
-
-//     res.json({mensagem:"usuario removido"});
-// });
-
-
-//login
+// login
 app.post("/login", async (req, res) => {
-
   try {
-
     const { email, senha } = req.body;
 
     const [rows] = await db.execute(
@@ -109,33 +65,7 @@ app.post("/login", async (req, res) => {
 
     const usuario = rows[0];
 
-    let senhaBanco = usuario.senha;
-    let senhaValida = false;
-
-
-    
-    if (senhaBanco.startsWith("$2")) {
-
-      senhaValida = await bcrypt.compare(senha, senhaBanco);
-
-    } else {
-
-     
-      senhaValida = senha === senhaBanco;
-
-  
-      if (senhaValida) {
-
-        const hash = await bcrypt.hash(senha, 10);
-
-        await db.execute(
-          "UPDATE Usuarios SET senha=? WHERE id=?",
-          [hash, usuario.id]
-        );
-
-      }
-
-    }
+    const senhaValida = await bcrypt.compare(senha, usuario.senha);
 
     if (!senhaValida)
       return res.status(401).json({ erro: "senha incorreta" });
@@ -146,122 +76,75 @@ app.post("/login", async (req, res) => {
     });
 
   } catch (err) {
-
     console.error(err);
     res.status(500).json({ erro: "erro no login" });
-
   }
-
 });
 
-
-// criar local
-// app.post("/locais", async (req,res)=>{
-
-//     const {codigo,definicao} = req.body;
-
-//     await db.execute(
-//         "INSERT INTO Locais (codigo,definicao) VALUES (?,?)",
-//         [codigo,definicao]
-//     );
-
-//     res.json({mensagem:"local criado"});
-// });
-
+/* ================= LOCAIS ================= */
 
 // listar locais
 app.get("/locais", async (req, res) => {
-
-  const [rows] = await db.execute(
-    "SELECT * FROM Locais"
-  );
-
+  const [rows] = await db.execute("SELECT * FROM Locais");
   res.json(rows);
 });
 
+// itens de um local (por CODIGO)
+app.get("/locais/:codigo/itens", async (req, res) => {
+  try {
+    const codigo = req.params.codigo;
 
-// local por codigo
-// app.get("/locais/:codigo", async (req,res)=>{
+    const [rows] = await db.execute(
+      "SELECT * FROM Itens WHERE localizacao = ? ORDER BY id",
+      [codigo]
+    );
 
-//     const [rows] = await db.execute(
-//         "SELECT * FROM Locais WHERE codigo=?",
-//         [req.params.codigo]
-//     );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "erro ao buscar itens" });
+  }
+});
 
-//     res.json(rows);
-// });
-
-
-// atualizar local
-// app.put("/locais/:codigo", async (req,res)=>{
-
-//     const {definicao} = req.body;
-
-//     await db.execute(
-//         "UPDATE Locais SET definicao=? WHERE codigo=?",
-//         [definicao,req.params.codigo]
-//     );
-
-//     res.json({mensagem:"local atualizado"});
-// });
-
-
-// deletar local
-// app.delete("/locais/:codigo", async (req,res)=>{
-
-//     await db.execute(
-//         "DELETE FROM Locais WHERE codigo=?",
-//         [req.params.codigo]
-//     );
-
-//     res.json({mensagem:"local removido"});
-// });
-
+/* ================= ITENS ================= */
 
 // criar item
 app.post("/itens", async (req, res) => {
+  try {
+    const { etiqueta, nome, definicao, descricao, localizacao } = req.body;
 
-  const { codigo, etiqueta, nome, definicao, descricao, localizacao } = req.body;
+    if (!nome || !localizacao) {
+      return res.status(400).json({ erro: "dados inválidos" });
+    }
 
-  await db.execute(
-    `INSERT INTO Itens 
-        (codigo,etiqueta,nome,definicao,descricao,localizacao)
-        VALUES (?,?,?,?,?,?)`,
-    [codigo, etiqueta, nome, definicao, descricao, localizacao]
-  );
+    await db.execute(
+      `INSERT INTO Itens 
+      (etiqueta,nome,definicao,descricao,localizacao)
+      VALUES (?,?,?,?,?)`,
+      [etiqueta, nome, definicao, descricao, localizacao]
+    );
 
-  res.json({ mensagem: "item criado" });
+    res.json({ mensagem: "item criado" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "erro ao criar item" });
+  }
 });
 
-
-// listar itens
+// listar itens com JOIN correto
 app.get("/itens", async (req, res) => {
-
   const [rows] = await db.execute(`
-        SELECT Itens.*,Locais.definicao as local
-        FROM Itens
-        JOIN Locais
-        ON Itens.localizacao = Locais.codigo
-    `);
+    SELECT Itens.*, Locais.definicao as local
+    FROM Itens
+    JOIN Locais ON Itens.localizacao = Locais.codigo
+  `);
 
   res.json(rows);
 });
 
-
-// item por id
-// app.get("/itens/:id", async (req,res)=>{
-
-//     const [rows] = await db.execute(
-//         "SELECT * FROM Itens WHERE id=?",
-//         [req.params.id]
-//     );
-
-//     res.json(rows);
-// });
-
 // atualizar item
 app.put("/itens/:id", async (req, res) => {
-
   const { nome, descricao } = req.body;
 
   await db.execute(
@@ -274,7 +157,6 @@ app.put("/itens/:id", async (req, res) => {
 
 // deletar item
 app.delete("/itens/:id", async (req, res) => {
-
   await db.execute(
     "DELETE FROM Itens WHERE id=?",
     [req.params.id]
@@ -282,24 +164,6 @@ app.delete("/itens/:id", async (req, res) => {
 
   res.json({ mensagem: "item removido" });
 });
-
-
-//itens de um local
-app.get("/locais/:codigo/itens", async (req, res, next) => {
-  try {
-    const codigo = req.params.codigo;
-    const [rows] = await db.execute(
-      "SELECT * FROM Itens WHERE localizacao = ? ORDER BY codigo", 
-      [codigo]
-    );
-    console.log(`Estoque ${codigo}: ${rows.length} itens`);
-    res.json(rows);
-  } catch (err) {
-    next(err);
-  }
-});
-
-
 
 app.listen(3000, () => {
   console.log("Servidor rodando em http://localhost:3000");

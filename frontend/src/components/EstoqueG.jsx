@@ -12,6 +12,15 @@ const EstoqueG = () => {
   const [menuAberto, setMenuAberto] = useState(false);
   const navigate = useNavigate();
 
+  const [novoItem, setNovoItem] = useState({
+    id: '',
+    etiqueta: false,
+    nome: '',
+    definicao: '',
+    descricao: '',
+    localizacao: ''
+  });
+
   useEffect(() => {
     carregarDados();
   }, []);
@@ -23,7 +32,7 @@ const EstoqueG = () => {
   const carregarDados = async () => {
     try {
       setCarregando(true);
-      
+
       const respLocais = await fetch('http://localhost:3000/locais');
       const locaisData = await respLocais.json();
       setLocais(locaisData);
@@ -31,7 +40,7 @@ const EstoqueG = () => {
       const respItens = await fetch('http://localhost:3000/itens');
       const itensData = await respItens.json();
       setItens(itensData);
-      
+
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       alert('Erro ao carregar dados do servidor');
@@ -43,7 +52,7 @@ const EstoqueG = () => {
   const filtrarItens = () => {
     let filtrados = itens;
     if (filtroNome) {
-      filtrados = filtrados.filter(item => 
+      filtrados = filtrados.filter(item =>
         item.nome.toLowerCase().includes(filtroNome.toLowerCase())
       );
     }
@@ -65,6 +74,54 @@ const EstoqueG = () => {
       </div>
     );
   }
+
+
+  const adicionarItem = async () => {
+    if (!novoItem.nome || !novoItem.localizacao) {
+      alert('Preencha nome e localização');
+      return;
+    }
+
+    try {
+      const resp = await fetch('http://localhost:3000/itens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(novoItem)
+      });
+
+      if (!resp.ok) throw new Error();
+
+      alert('Item criado!');
+
+      setNovoItem({
+        etiqueta: false,
+        nome: '',
+        definicao: '',
+        descricao: '',
+        localizacao: ''
+      });
+
+      carregarDados();
+
+    } catch {
+      alert('Erro ao criar item');
+    }
+  };
+
+
+  const deletarItem = async (id) => {
+    if (!window.confirm('Deseja realmente deletar este item?')) return;
+
+    try {
+      await fetch(`http://localhost:3000/itens/${id}`, {
+        method: 'DELETE'
+      });
+
+      carregarDados();
+    } catch (err) {
+      alert('Erro ao deletar item');
+    }
+  };
 
   return (
     <div className="home-container">
@@ -102,8 +159,63 @@ const EstoqueG = () => {
 
       {/* FILTROS */}
       <div className="top-bar">
-        <select 
-          value={filtroLocal} 
+        <div style={{ padding: '20px', background: '#f5f5f5' }}>
+          <h3>Adicionar Item</h3>
+
+          <input
+            placeholder="Código (ex: I010)"
+            value={novoItem.id}
+            onChange={(e) => setNovoItem({ ...novoItem, id: e.target.value })}
+          />
+
+          <input
+            placeholder="Nome"
+            value={novoItem.nome}
+            onChange={(e) => setNovoItem({ ...novoItem, nome: e.target.value })}
+          />
+
+          <input
+            placeholder="Definição"
+            value={novoItem.definicao}
+            onChange={(e) => setNovoItem({ ...novoItem, definicao: e.target.value })}
+          />
+
+          <input
+            placeholder="Descrição"
+            value={novoItem.descricao}
+            onChange={(e) => setNovoItem({ ...novoItem, descricao: e.target.value })}
+          />
+
+          {/* SELECT DOS LOCAIS (FK CORRETA) */}
+          <select
+            value={novoItem.localizacao}
+            onChange={(e) => setNovoItem({ ...novoItem, localizacao: e.target.value })}
+          >
+            <option value="">Selecione o local</option>
+            {locais.map(local => (
+              <option key={local.id} value={local.id}>
+                {local.id} - {local.definicao}
+              </option>
+            ))}
+          </select>
+
+          <label>
+            <input
+              type="checkbox"
+              checked={novoItem.etiqueta}
+              onChange={(e) => setNovoItem({ ...novoItem, etiqueta: e.target.checked })}
+            />
+            Possui etiqueta
+          </label>
+
+          <br />
+
+          <button onClick={adicionarItem}>
+            ➕ Adicionar Item
+          </button>
+        </div>
+        <select
+          value={filtroLocal}
           onChange={(e) => setFiltroLocal(e.target.value)}
           style={{ padding: '10px', borderRadius: '10px', border: '1px solid #ccc' }}
         >
@@ -117,22 +229,61 @@ const EstoqueG = () => {
       </div>
 
       {/* GRID DE ITENS */}
-      <div className="grid-locais" style={{ marginTop: '20px' }}>
-        {itensFiltrados.length === 0 && (
-          <div className="vazio">
-            <p>Nenhum item encontrado</p>
-          </div>
+      <div style={{ marginTop: '20px', padding: '20px' }}>
+
+        {itensFiltrados.length === 0 ? (
+          <p>Nenhum item encontrado</p>
+        ) : (
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            background: '#fff',
+            borderRadius: '10px',
+            overflow: 'hidden'
+          }}>
+            <thead style={{ background: '#0b7a3e', color: '#fff' }}>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Etiqueta</th>
+                <th>Definição</th>
+                <th>Descrição</th>
+                <th>Local</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {itensFiltrados.map(item => (
+                <tr key={item.id} style={{ textAlign: 'center', borderBottom: '1px solid #ddd' }}>
+                  <td>{item.id}</td>
+                  <td>{item.nome}</td>
+                  <td>{item.etiqueta ? '✔' : '✖'}</td>
+                  <td>{item.definicao}</td>
+                  <td>{item.descricao || '-'}</td>
+                  <td>{item.local}</td>
+
+                  <td>
+                    <button
+                      style={{
+                        background: '#e74c3c',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => deletarItem(item.id)}
+                    >
+                      🗑
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
-        {itensFiltrados.map(item => (
-          <div className="card-local" key={item.id}>
-            <h3>{item.nome}</h3>
-            <p><strong>Código:</strong> {item.codigo}</p>
-            <p><strong>Etiqueta:</strong> {item.etiqueta ? 'Sim' : 'Não'}</p>
-            <p><strong>Definição:</strong> {item.definicao}</p>
-            <p><strong>Descrição:</strong> {item.descricao}</p>
-            <p><strong>Localização:</strong> {item.localizacao}</p>
-          </div>
-        ))}
+
       </div>
     </div>
   );

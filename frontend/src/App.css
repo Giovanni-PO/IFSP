@@ -113,24 +113,7 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 35px;
   }
-  
-  /* CARD BONITO */
-  .card-local {
-    background: white;
-    border-radius: 16px;
-    padding: 30px;
-    border-top: 6px solid #0b7a3e;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  .card-local:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-  }
-  
-  .card-local h3 { margin: 0; color: #0b7a3e; font-size: 22px; }
-  .card-local p { color: #333; margin: 15px 0; font-size: 17px; }
-  
+    
   /* BOTÃO VER ESTOQUE */
   .estoque-btn {
     width: 100%;
