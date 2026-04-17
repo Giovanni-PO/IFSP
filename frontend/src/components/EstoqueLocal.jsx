@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import '../App.css'; // mesmo CSS do Home
+import '../App.css';
 
 const EstoqueLocal = () => {
   const { codigo } = useParams();
   const navigate = useNavigate();
 
   const [itens, setItens] = useState([]);
+  const [itensFiltrados, setItensFiltrados] = useState([]);
+  const [filtroNome, setFiltroNome] = useState('');
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+
   const [localizacao, setLocalizacao] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
@@ -21,10 +25,12 @@ const EstoqueLocal = () => {
   });
 
   useEffect(() => {
-    if (codigo) {
-      carregarEstoqueLocal();
-    }
+    if (codigo) carregarEstoqueLocal();
   }, [codigo]);
+
+  useEffect(() => {
+    filtrarItens();
+  }, [itens, filtroNome]);
 
   const carregarEstoqueLocal = async () => {
     try {
@@ -32,69 +38,65 @@ const EstoqueLocal = () => {
       setErro('');
 
       const response = await fetch(`http://localhost:3000/locais/${codigo}/itens`);
-      if (!response.ok) throw new Error('Erro ao carregar itens');
+      if (!response.ok) throw new Error();
 
-      const itensData = await response.json();
-      setItens(itensData);
+      const data = await response.json();
+      setItens(data);
+      setItensFiltrados(data);
 
       const localResp = await fetch('http://localhost:3000/locais');
       const locaisData = await localResp.json();
-      const localEncontrado = locaisData.find(l => l.codigo === codigo);
-      setLocalizacao(localEncontrado);
+      const local = locaisData.find(l => l.codigo === codigo);
+      setLocalizacao(local);
 
-    } catch (error) {
-      setErro('Erro ao carregar estoque. Backend rodando?');
-      console.error('Erro:', error);
+    } catch {
+      setErro('Erro ao carregar estoque.');
     } finally {
       setCarregando(false);
     }
   };
 
-  const voltarHome = () => navigate('/');
-  const voltarGeral = () => navigate('/estoque');
+  const filtrarItens = () => {
+    if (!filtroNome) return setItensFiltrados(itens);
 
-  if (carregando) {
-    return (
-      <div className="loading">
-        <h1>Carregando Estoque...</h1>
-        <p>Localização: {codigo}</p>
-      </div>
+    const filtrados = itens.filter(item =>
+      item.nome.toLowerCase().includes(filtroNome.toLowerCase())
     );
-  }
+
+    setItensFiltrados(filtrados);
+  };
 
   const adicionarItem = async () => {
-    if (!novoItem.nome) {
-      alert('Preencha nome');
-      return;
-    }
+    if (!novoItem.nome) return alert('Preencha nome');
 
     await fetch('http://localhost:3000/itens', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...novoItem,
-        localizacao: codigo
-      })
+      body: JSON.stringify({ ...novoItem, localizacao: codigo })
     });
 
+    setNovoItem({
+      codigo: '',
+      etiqueta: false,
+      nome: '',
+      definicao: '',
+      descricao: ''
+    });
+
+    setMostrarFormulario(false);
     carregarEstoqueLocal();
   };
 
-
   const deletarItem = async (id) => {
-    if (!window.confirm('Deseja realmente deletar este item?')) return;
+    if (!window.confirm('Deseja deletar?')) return;
 
-    try {
-      await fetch(`http://localhost:3000/itens/${id}`, {
-        method: 'DELETE'
-      });
-
-      carregarEstoqueLocal();
-    } catch (err) {
-      alert('Erro ao deletar item');
-    }
+    await fetch(`http://localhost:3000/itens/${id}`, { method: 'DELETE' });
+    carregarEstoqueLocal();
   };
 
+  if (carregando) {
+    return <div className="loading"><h1>Carregando...</h1></div>;
+  }
 
   return (
     <div className="home-container">
@@ -102,7 +104,7 @@ const EstoqueLocal = () => {
       {/* HEADER */}
       <header className="header">
         <div className="header-left">
-          <img src="/LogoIFSP.jpg" alt="Logo IFSP" />
+          <img src="/LogoIFSP.jpg" alt="Logo" />
           <h1>IFSP</h1>
         </div>
 
@@ -115,79 +117,108 @@ const EstoqueLocal = () => {
         </div>
       </header>
 
-      {/* MENU LATERAL */}
+      {/* MENU */}
       <div className={`side-menu-overlay ${menuAberto ? 'active' : ''}`} onClick={() => setMenuAberto(false)}>
         <div className={`side-menu ${menuAberto ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
-          <button className="close-btn" onClick={() => setMenuAberto(false)}>×</button>
-          <h3>Menu</h3>
-          <button onClick={voltarHome}>🏠 Home</button>
-          <button onClick={voltarGeral}>📦 Estoque Geral</button>
+          <button onClick={() => setMenuAberto(false)}>×</button>
+          <button onClick={() => navigate('/')}>🏠 Home</button>
+          <button onClick={() => navigate('/estoque')}>📦 Geral</button>
           <button onClick={carregarEstoqueLocal}>🔄 Atualizar</button>
         </div>
       </div>
 
-      {/* ERRO */}
-      {erro && (
-        <div className="erro">
-          <p>{erro}</p>
-        </div>
-      )}
-
-      {/* INFORMAÇÕES DA LOCALIZAÇÃO */}
+      {/* INFO LOCAL */}
       {localizacao && (
         <div className="locais-container">
-          <div style={{ padding: '20px', background: '#f5f5f5' }}>
-            <h3>Adicionar Item neste Local ({codigo})</h3>
 
-            <input
-              placeholder="Código"
-              value={novoItem.codigo}
-              onChange={(e) => setNovoItem({ ...novoItem, codigo: e.target.value })}
-            />
-
-            <input
-              placeholder="Nome"
-              value={novoItem.nome}
-              onChange={(e) => setNovoItem({ ...novoItem, nome: e.target.value })}
-            />
-
-            <input
-              placeholder="Categoria / Definição"
-              value={novoItem.definicao}
-              onChange={(e) => setNovoItem({ ...novoItem, definicao: e.target.value })}
-            />
-
-            <input
-              placeholder="Descrição"
-              value={novoItem.descricao}
-              onChange={(e) => setNovoItem({ ...novoItem, descricao: e.target.value })}
-            />
-
-            <label>
-              <input
-                type="checkbox"
-                checked={novoItem.etiqueta}
-                onChange={(e) => setNovoItem({ ...novoItem, etiqueta: e.target.checked })}
-              />
-              Possui etiqueta
-            </label>
-
-            <br />
-
-            <button onClick={adicionarItem}>
-              ➕ Adicionar Item
-            </button>
-          </div>
           <h2>{localizacao.definicao}</h2>
-          <p>Total de itens: {itens.length}</p>
+          <p>Total de itens: {itensFiltrados.length}</p>
+
+          {/* BOTÃO */}
+          <button
+            onClick={() => setMostrarFormulario(!mostrarFormulario)}
+            style={{
+              marginBottom: '15px',
+              padding: '10px',
+              background: '#0b7a3e',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px'
+            }}
+          >
+            {mostrarFormulario ? '❌ Cancelar' : '➕ Adicionar Item'}
+          </button>
+
+          {/* FORM */}
+          {mostrarFormulario && (
+            <div style={{ padding: '20px', background: '#f5f5f5' }}>
+
+              <input
+                placeholder="Código"
+                value={novoItem.codigo}
+                onChange={(e) => setNovoItem({ ...novoItem, codigo: e.target.value })}
+              />
+
+              <input
+                placeholder="Nome"
+                value={novoItem.nome}
+                onChange={(e) => setNovoItem({ ...novoItem, nome: e.target.value })}
+              />
+
+              <input
+                placeholder="Categoria"
+                value={novoItem.definicao}
+                onChange={(e) => setNovoItem({ ...novoItem, definicao: e.target.value })}
+              />
+
+              <input
+                placeholder="Descrição"
+                value={novoItem.descricao}
+                onChange={(e) => setNovoItem({ ...novoItem, descricao: e.target.value })}
+              />
+
+              <label>
+                <input
+                  type="checkbox"
+                  checked={novoItem.etiqueta}
+                  onChange={(e) => setNovoItem({ ...novoItem, etiqueta: e.target.checked })}
+                />
+                Possui etiqueta
+              </label>
+
+              <br />
+
+              <button onClick={adicionarItem}>
+                ✔ Salvar
+              </button>
+
+            </div>
+          )}
         </div>
       )}
 
-      {/* GRID DE ITENS */}
-      <div style={{ marginTop: '20px', padding: '20px' }}>
+      {/* BUSCA */}
+      <div style={{ padding: '20px', display: 'flex', justifyContent: 'center' }}>
+        <input
+          type="text"
+          placeholder="🔍 Buscar item..."
+          value={filtroNome}
+          onChange={(e) => setFiltroNome(e.target.value)}
+          style={{
+            width: '100%',
+            maxWidth: '400px',
+            padding: '10px',
+            borderRadius: '10px',
+            border: '1px solid #ccc'
+          }}
+        />
+      </div>
 
-        {itens.length === 0 ? (
-          <p>Nenhum item nesta localização</p>
+      {/* TABELA */}
+      <div style={{ padding: '20px' }}>
+
+        {itensFiltrados.length === 0 ? (
+          <p>Nenhum item encontrado</p>
         ) : (
           <table style={{
             width: '100%',
@@ -207,7 +238,7 @@ const EstoqueLocal = () => {
             </thead>
 
             <tbody>
-              {itens.map(item => (
+              {itensFiltrados.map(item => (
                 <tr key={item.id} style={{ textAlign: 'center', borderBottom: '1px solid #ddd' }}>
                   <td>{item.id}</td>
                   <td>{item.nome}</td>
