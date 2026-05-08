@@ -1,31 +1,43 @@
-drop database if exists Inventario;
-create database Inventario;
-use Inventario;
+DROP DATABASE IF EXISTS Inventario;
 
-create table Locais(
-	id int not null primary key auto_increment,
-    codigo varchar(10) not null unique,
-    definicao varchar(100) not null
+CREATE DATABASE Inventario;
+
+USE Inventario;
+
+CREATE TABLE Locais(
+    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    codigo VARCHAR(10) NOT NULL UNIQUE,
+    definicao VARCHAR(100) NOT NULL
 );
 
-create table Itens(
-	id int not null primary key auto_increment,
-    codigo varchar(10) not null unique,
-    etiqueta boolean not null default 0,
-    nome varchar(50) not null,
-    definicao varchar(100) not null,
-    descricao text,
-    localizacao varchar(10) not null,
-    
-    constraint fk_localizacao
-    foreign key (localizacao) references Locais(codigo)
+CREATE TABLE ItensExternos(
+    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    codigo VARCHAR(10) NOT NULL UNIQUE,
+    etiqueta BOOLEAN NOT NULL DEFAULT 0,
+    nome VARCHAR(50) NOT NULL,
+    definicao VARCHAR(100) NOT NULL,
+    descricao TEXT
 );
 
-create table Usuarios(
-	id int not null primary key auto_increment,
-    nome_usuario varchar(20) not null unique,
-    email varchar(100) not null unique,
-    senha varchar(255) not null
+CREATE TABLE Itens(
+    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    codigo VARCHAR(10) NOT NULL UNIQUE,
+    etiqueta BOOLEAN NOT NULL DEFAULT 0,
+    nome VARCHAR(50) NOT NULL,
+    definicao VARCHAR(100) NOT NULL,
+    descricao TEXT,
+    localizacao VARCHAR(10) NOT NULL,
+
+    CONSTRAINT fk_localizacao
+    FOREIGN KEY (localizacao)
+    REFERENCES Locais(codigo)
+);
+
+CREATE TABLE Usuarios(
+    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    nome_usuario VARCHAR(20) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL
 );
 
 INSERT INTO Locais (codigo, definicao) VALUES
@@ -39,9 +51,17 @@ INSERT INTO Usuarios (nome_usuario,email,senha) VALUES
 ("joao","joao@email.com","teste123"),
 ("maria","maria@email.com","teste123");
 
-INSERT INTO Itens (codigo,etiqueta,nome,definicao,descricao,localizacao) VALUES
+INSERT INTO ItensExternos
+(codigo, etiqueta, nome, definicao, descricao)
+VALUES
+("I010",1,"HD Externo","Armazenamento","HD Seagate 1TB"),
+("I011",0,"Fonte","Eletronico","Fonte ATX 500W"),
+("I012",1,"Projetor","Equipamento","Projetor Epson HDMI"),
+("I013",0,"Webcam","Periferico","Webcam Full HD");
+
+INSERT INTO Itens
+(codigo,etiqueta,nome,definicao,descricao,localizacao)
+VALUES
 ("I001",1,"Mouse","Periferico","Mouse USB preto","A1"),
 ("I002",1,"Teclado","Periferico","Teclado mecanico","A1"),
-("I003",0,"Monitor","Equipamento","Monitor 24 polegadas","B1"),
-("I004",0,"Multimetro","Ferramenta","Medidor eletrico","D1"),
-("I005",1,"Notebook","Computador","Notebook para professores","C1");
+("I003",0,"Monitor","Equipamento","Monitor 24 polegadas","B1");

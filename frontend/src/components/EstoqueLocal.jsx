@@ -46,6 +46,7 @@ const EstoqueLocal = () => {
 
       const localResp = await fetch('http://localhost:3000/locais');
       const locaisData = await localResp.json();
+
       const local = locaisData.find(l => l.codigo === codigo);
       setLocalizacao(local);
 
@@ -59,21 +60,46 @@ const EstoqueLocal = () => {
   const filtrarItens = () => {
     if (!filtroNome) return setItensFiltrados(itens);
 
-    const filtrados = itens.filter(item =>
-      item.nome.toLowerCase().includes(filtroNome.toLowerCase())
+    setItensFiltrados(
+      itens.filter(item =>
+        item.codigo.toLowerCase().includes(filtroNome.toLowerCase()) ||
+        item.nome.toLowerCase().includes(filtroNome.toLowerCase())
+      )
     );
+  };
 
-    setItensFiltrados(filtrados);
+  const buscarItemExterno = async () => {
+    if (!novoItem.codigo) return alert('Digite um código');
+
+    try {
+      const resp = await fetch(`http://localhost:3000/itens-externos/${novoItem.codigo}`);
+      const data = await resp.json();
+
+      if (!resp.ok) return alert(data.erro);
+
+      setNovoItem({
+        codigo: data.codigo,
+        etiqueta: data.etiqueta,
+        nome: data.nome,
+        definicao: data.definicao,
+        descricao: data.descricao
+      });
+
+    } catch {
+      alert('Erro ao buscar item');
+    }
   };
 
   const adicionarItem = async () => {
-    if (!novoItem.nome) return alert('Preencha nome');
-
-    await fetch('http://localhost:3000/itens', {
+    const resp = await fetch('http://localhost:3000/itens', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...novoItem, localizacao: codigo })
     });
+
+    const data = await resp.json();
+
+    if (!resp.ok) return alert(data.erro);
 
     setNovoItem({
       codigo: '',
@@ -90,18 +116,18 @@ const EstoqueLocal = () => {
   const deletarItem = async (id) => {
     if (!window.confirm('Deseja deletar?')) return;
 
-    await fetch(`http://localhost:3000/itens/${id}`, { method: 'DELETE' });
+    await fetch(`http://localhost:3000/itens/${id}`, {
+      method: 'DELETE'
+    });
+
     carregarEstoqueLocal();
   };
 
-  if (carregando) {
-    return <div className="loading"><h1>Carregando...</h1></div>;
-  }
+  if (carregando) return <div className="loading"><h1>Carregando...</h1></div>;
 
   return (
     <div className="home-container">
 
-      {/* HEADER */}
       <header className="header">
         <div className="header-left">
           <img src="/LogoIFSP.jpg" alt="Logo" />
@@ -117,118 +143,100 @@ const EstoqueLocal = () => {
         </div>
       </header>
 
-      {/* MENU */}
       <div className={`side-menu-overlay ${menuAberto ? 'active' : ''}`} onClick={() => setMenuAberto(false)}>
         <div className={`side-menu ${menuAberto ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => setMenuAberto(false)}>×</button>
+          <button className="close-btn" onClick={() => setMenuAberto(false)}>×</button>
           <button onClick={() => navigate('/')}>🏠 Home</button>
           <button onClick={() => navigate('/estoque')}>📦 Geral</button>
           <button onClick={carregarEstoqueLocal}>🔄 Atualizar</button>
         </div>
       </div>
 
-      {/* INFO LOCAL */}
       {localizacao && (
-        <div className="locais-container">
-
-          <h2>{localizacao.definicao}</h2>
+        <div className="form-box">
+          <h3 className="form-title">{localizacao.definicao}</h3>
           <p>Total de itens: {itensFiltrados.length}</p>
 
-          {/* BOTÃO */}
-          <button
-            onClick={() => setMostrarFormulario(!mostrarFormulario)}
-            style={{
-              marginBottom: '15px',
-              padding: '10px',
-              background: '#0b7a3e',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '8px'
-            }}
-          >
+          <button className="btn-primary" onClick={() => setMostrarFormulario(!mostrarFormulario)}>
             {mostrarFormulario ? '❌ Cancelar' : '➕ Adicionar Item'}
           </button>
 
-          {/* FORM */}
           {mostrarFormulario && (
-            <div style={{ padding: '20px', background: '#f5f5f5' }}>
+            <div className="form-box">
 
-              <input
-                placeholder="Código"
-                value={novoItem.codigo}
-                onChange={(e) => setNovoItem({ ...novoItem, codigo: e.target.value })}
-              />
+        <h3 className="form-title">
+          Adicionar Item
+        </h3>
 
-              <input
-                placeholder="Nome"
-                value={novoItem.nome}
-                onChange={(e) => setNovoItem({ ...novoItem, nome: e.target.value })}
-              />
+        <div className="form-grid">
 
-              <input
-                placeholder="Categoria"
-                value={novoItem.definicao}
-                onChange={(e) => setNovoItem({ ...novoItem, definicao: e.target.value })}
-              />
+          <input
+            placeholder="Código"
+            value={novoItem.codigo}
+            onChange={(e) =>
+              setNovoItem({
+                ...novoItem,
+                codigo: e.target.value
+              })
+            }
+          />
 
-              <input
-                placeholder="Descrição"
-                value={novoItem.descricao}
-                onChange={(e) => setNovoItem({ ...novoItem, descricao: e.target.value })}
-              />
+          <button className="btn-primary" onClick={buscarItemExterno}>
+            🔍 Buscar
+          </button>
 
-              <label>
-                <input
-                  type="checkbox"
-                  checked={novoItem.etiqueta}
-                  onChange={(e) => setNovoItem({ ...novoItem, etiqueta: e.target.checked })}
-                />
-                Possui etiqueta
-              </label>
+          <input value={novoItem.nome} placeholder="Nome" disabled />
+          <input value={novoItem.definicao} placeholder="Definição" disabled />
 
-              <br />
+          <textarea value={novoItem.descricao} placeholder="Descrição" disabled />
 
-              <button onClick={adicionarItem}>
-                ✔ Salvar
-              </button>
 
-            </div>
+          {/* CHECKBOX PADRÃO IGUAL OUTRAS PÁGINAS */}
+          <div className="checkbox-modern">
+            <input
+              type="checkbox"
+              checked={novoItem.etiqueta}
+              onChange={(e) =>
+                setNovoItem({
+                  ...novoItem,
+                  etiqueta: e.target.checked
+                })
+              }
+            />
+            <span>Possui etiqueta</span>
+          </div>
+
+          <button className="btn-primary" onClick={adicionarItem}>
+            ➕ Adicionar
+          </button>
+
+        </div>
+
+      </div>
           )}
         </div>
       )}
 
-      {/* BUSCA */}
-      <div style={{ padding: '20px', display: 'flex', justifyContent: 'center' }}>
+      {erro && <div className="erro">{erro}</div>}
+
+      <div className="filters">
         <input
-          type="text"
-          placeholder="🔍 Buscar item..."
+          placeholder="Buscar item..."
           value={filtroNome}
           onChange={(e) => setFiltroNome(e.target.value)}
-          style={{
-            width: '100%',
-            maxWidth: '400px',
-            padding: '10px',
-            borderRadius: '10px',
-            border: '1px solid #ccc'
-          }}
         />
       </div>
 
-      {/* TABELA */}
-      <div style={{ padding: '20px' }}>
+      <div className="table-container">
 
         {itensFiltrados.length === 0 ? (
-          <p>Nenhum item encontrado</p>
+          <div className="vazio">Nenhum item encontrado</div>
         ) : (
-          <table style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            background: '#fff',
-            borderRadius: '10px'
-          }}>
-            <thead style={{ background: '#0b7a3e', color: '#fff' }}>
+          <table className="inventory-table">
+            <thead>
               <tr>
                 <th>ID</th>
+                <th>Código</th>
                 <th>Nome</th>
                 <th>Etiqueta</th>
                 <th>Categoria</th>
@@ -239,31 +247,22 @@ const EstoqueLocal = () => {
 
             <tbody>
               {itensFiltrados.map(item => (
-                <tr key={item.id} style={{ textAlign: 'center', borderBottom: '1px solid #ddd' }}>
+                <tr key={item.id}>
                   <td>{item.id}</td>
+                  <td>{item.codigo}</td>
                   <td>{item.nome}</td>
                   <td>{item.etiqueta ? '✔' : '✖'}</td>
                   <td>{item.definicao}</td>
-                  <td>{item.descricao || '-'}</td>
-
+                  <td>{item.descricao}</td>
                   <td>
-                    <button
-                      style={{
-                        background: '#e74c3c',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '5px 10px',
-                        borderRadius: '6px',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => deletarItem(item.id)}
-                    >
+                    <button className="delete-btn" onClick={() => deletarItem(item.id)}>
                       🗑
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
+
           </table>
         )}
 
