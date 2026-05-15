@@ -19,7 +19,6 @@ const EstoqueLocal = () => {
   const [novoItem, setNovoItem] = useState({
     codigo: '',
     etiqueta: false,
-    nome: '',
     definicao: '',
     descricao: ''
   });
@@ -80,7 +79,6 @@ const EstoqueLocal = () => {
       setNovoItem({
         codigo: data.codigo,
         etiqueta: data.etiqueta,
-        nome: data.nome,
         definicao: data.definicao,
         descricao: data.descricao
       });
@@ -104,7 +102,6 @@ const EstoqueLocal = () => {
     setNovoItem({
       codigo: '',
       etiqueta: false,
-      nome: '',
       definicao: '',
       descricao: ''
     });
@@ -185,7 +182,6 @@ const EstoqueLocal = () => {
             🔍 Buscar
           </button>
 
-          <input value={novoItem.nome} placeholder="Nome" disabled />
           <input value={novoItem.definicao} placeholder="Definição" disabled />
 
           <textarea value={novoItem.descricao} placeholder="Descrição" disabled />
@@ -237,7 +233,6 @@ const EstoqueLocal = () => {
               <tr>
                 <th>ID</th>
                 <th>Código</th>
-                <th>Nome</th>
                 <th>Etiqueta</th>
                 <th>Categoria</th>
                 <th>Descrição</th>
@@ -250,7 +245,6 @@ const EstoqueLocal = () => {
                 <tr key={item.id}>
                   <td>{item.id}</td>
                   <td>{item.codigo}</td>
-                  <td>{item.nome}</td>
                   <td>{item.etiqueta ? '✔' : '✖'}</td>
                   <td>{item.definicao}</td>
                   <td>{item.descricao}</td>

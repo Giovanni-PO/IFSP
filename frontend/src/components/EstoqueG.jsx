@@ -14,7 +14,6 @@ const EstoqueG = () => {
   const [novoItem, setNovoItem] = useState({
     codigo: '',
     etiqueta: false,
-    nome: '',
     definicao: '',
     descricao: '',
     localizacao: ''
@@ -52,7 +51,6 @@ const EstoqueG = () => {
       ...novoItem,
       codigo: data.codigo,
       etiqueta: data.etiqueta,
-      nome: data.nome,
       definicao: data.definicao,
       descricao: data.descricao
     });
@@ -86,7 +84,7 @@ const EstoqueG = () => {
 
   const itensFiltrados = itens.filter(item =>
     item.codigo.toLowerCase().includes(filtroNome.toLowerCase()) ||
-    item.nome.toLowerCase().includes(filtroNome.toLowerCase())
+    item.descricao.toLowerCase().includes(filtroNome.toLowerCase())
   );
 
   return (
@@ -175,7 +173,6 @@ const EstoqueG = () => {
             🔍 Buscar
           </button>
 
-          <input value={novoItem.nome} placeholder="Nome" disabled />
           <input value={novoItem.definicao} placeholder="Definição" disabled />
 
           <textarea value={novoItem.descricao} placeholder="Descrição" disabled />
@@ -245,7 +242,6 @@ const EstoqueG = () => {
             <tr>
               <th>ID</th>
               <th>Código</th>
-              <th>Nome</th>
               <th>Definição</th>
               <th>Descrição</th>
               <th>Etiqueta</th>
@@ -260,7 +256,6 @@ const EstoqueG = () => {
               <tr key={item.id}>
                 <td>{item.id}</td>
                 <td>{item.codigo}</td>
-                <td>{item.nome}</td>
                 <td>{item.definicao}</td>
                 <td>{item.descricao}</td>
                 <td>{item.etiqueta ? '✔' : '✖'}</td>

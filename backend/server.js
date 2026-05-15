@@ -234,7 +234,6 @@ app.post("/itens", async (req, res) => {
     const {
       codigo,
       etiqueta,
-      nome,
       definicao,
       descricao,
       localizacao
@@ -243,7 +242,6 @@ app.post("/itens", async (req, res) => {
     // validacao
     if (
       !codigo ||
-      !nome ||
       !definicao ||
       !localizacao
     ) {
@@ -272,16 +270,14 @@ app.post("/itens", async (req, res) => {
       (
         codigo,
         etiqueta,
-        nome,
         definicao,
         descricao,
         localizacao
       )
-      VALUES (?,?,?,?,?,?)`,
+      VALUES (?,?,?,?,?)`,
       [
         codigo,
         etiqueta,
-        nome,
         definicao,
         descricao,
         localizacao
@@ -308,7 +304,6 @@ app.put("/itens/:id", async (req, res) => {
   try {
 
     const {
-      nome,
       definicao,
       descricao
     } = req.body;
@@ -316,12 +311,10 @@ app.put("/itens/:id", async (req, res) => {
     await db.execute(
       `UPDATE Itens
       SET
-        nome=?,
         definicao=?,
         descricao=?
       WHERE id=?`,
       [
-        nome,
         definicao,
         descricao,
         req.params.id
