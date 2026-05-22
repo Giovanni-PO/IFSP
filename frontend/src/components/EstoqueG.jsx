@@ -14,7 +14,6 @@ const EstoqueG = () => {
   const [novoItem, setNovoItem] = useState({
     codigo: '',
     etiqueta: false,
-    definicao: '',
     descricao: '',
     localizacao: ''
   });
@@ -51,7 +50,6 @@ const EstoqueG = () => {
       ...novoItem,
       codigo: data.codigo,
       etiqueta: data.etiqueta,
-      definicao: data.definicao,
       descricao: data.descricao
     });
   };
@@ -173,7 +171,6 @@ const EstoqueG = () => {
             🔍 Buscar
           </button>
 
-          <input value={novoItem.definicao} placeholder="Definição" disabled />
 
           <textarea value={novoItem.descricao} placeholder="Descrição" disabled />
 
@@ -190,7 +187,7 @@ const EstoqueG = () => {
 
             {locais.map(local => (
               <option key={local.codigo} value={local.codigo}>
-                {local.codigo} - {local.definicao}
+                {local.codigo}
               </option>
             ))}
           </select>
@@ -242,7 +239,6 @@ const EstoqueG = () => {
             <tr>
               <th>ID</th>
               <th>Código</th>
-              <th>Definição</th>
               <th>Descrição</th>
               <th>Etiqueta</th>
               <th>Local</th>
@@ -256,7 +252,6 @@ const EstoqueG = () => {
               <tr key={item.id}>
                 <td>{item.id}</td>
                 <td>{item.codigo}</td>
-                <td>{item.definicao}</td>
                 <td>{item.descricao}</td>
                 <td>{item.etiqueta ? '✔' : '✖'}</td>
                 <td>{item.local}</td>

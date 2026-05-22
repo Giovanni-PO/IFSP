@@ -19,7 +19,6 @@ const EstoqueLocal = () => {
   const [novoItem, setNovoItem] = useState({
     codigo: '',
     etiqueta: false,
-    definicao: '',
     descricao: ''
   });
 
@@ -79,7 +78,6 @@ const EstoqueLocal = () => {
       setNovoItem({
         codigo: data.codigo,
         etiqueta: data.etiqueta,
-        definicao: data.definicao,
         descricao: data.descricao
       });
 
@@ -102,7 +100,6 @@ const EstoqueLocal = () => {
     setNovoItem({
       codigo: '',
       etiqueta: false,
-      definicao: '',
       descricao: ''
     });
 
@@ -182,9 +179,8 @@ const EstoqueLocal = () => {
             🔍 Buscar
           </button>
 
-          <input value={novoItem.definicao} placeholder="Definição" disabled />
 
-          <textarea value={novoItem.descricao} placeholder="Descrição" disabled />
+          <textarea className='escrita' value={novoItem.descricao} placeholder="Descrição" disabled />
 
 
           {/* CHECKBOX PADRÃO IGUAL OUTRAS PÁGINAS */}
@@ -234,7 +230,6 @@ const EstoqueLocal = () => {
                 <th>ID</th>
                 <th>Código</th>
                 <th>Etiqueta</th>
-                <th>Categoria</th>
                 <th>Descrição</th>
                 <th>Ações</th>
               </tr>
@@ -246,7 +241,6 @@ const EstoqueLocal = () => {
                   <td>{item.id}</td>
                   <td>{item.codigo}</td>
                   <td>{item.etiqueta ? '✔' : '✖'}</td>
-                  <td>{item.definicao}</td>
                   <td>{item.descricao}</td>
                   <td>
                     <button className="delete-btn" onClick={() => deletarItem(item.id)}>
