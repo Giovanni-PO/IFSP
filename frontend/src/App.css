@@ -159,7 +159,7 @@ img {
   background: white;
   color: #0b7a3e;
 
-  border-radius: 10px;
+  border-radius: 15px;
   padding: 12px;
 
   border: none;
@@ -177,7 +177,7 @@ img {
 ====================================================== */
 
 .form-box {
-  background: #fff;
+  background: #ffffff;
   border-radius: 14px;
 
   padding: 20px;
@@ -310,7 +310,7 @@ textarea:disabled {
   padding: 8px 12px;
   border-radius: 10px;
 
-  background: #f2f8f5;
+  background: #ffffff;
   border: 1px solid #cfe0d6;
   
   margin-top: 0.5rem;
@@ -421,6 +421,18 @@ textarea:disabled {
   margin-top: 100px;
 }
 
+.card-local {
+  box-shadow: 3px 3px 10px 0px #a1a1a1;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 10px;
+  border-radius: 25px;
+}
+
+.form-box {
+  margin-top: 1em;
+}
+
 /* ======================================================
    RESPONSIVO
 ====================================================== */
@@ -448,5 +460,33 @@ textarea:disabled {
   }
 }
 
+.comissao-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
 
+@media (max-width: 900px) {
+  .comissao-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.comissao-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
+.gov-top {
+  width: 100%;
+}
+
+.linhas-baixo {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+.linhas-baixo .table-container {
+  flex: 1;
+}

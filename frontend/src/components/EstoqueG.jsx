@@ -114,34 +114,18 @@ const EstoqueG = () => {
 
       </header>
 
-      {/* MENU LATERAL IGUAL OUTRAS PÁGINAS */}
-      <div
-        className={`side-menu-overlay ${menuAberto ? 'active' : ''}`}
-        onClick={() => setMenuAberto(false)}
-      >
 
-        <div
-          className={`side-menu ${menuAberto ? 'active' : ''}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-
-          <button
-            className="close-btn"
-            onClick={() => setMenuAberto(false)}
-          >
-            ×
-          </button>
-
+      <div className={`side-menu-overlay ${menuAberto ? 'active' : ''}`} onClick={() => setMenuAberto(false)}>
+        <div className={`side-menu ${menuAberto ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <button className="close-btn" onClick={() => setMenuAberto(false)}>×</button>
+          <h3>Menu</h3>
           <button onClick={() => navigate('/')}>
-            🏠 Home
+            Home
           </button>
-
-          <button onClick={carregarDados}>
-            🔄 Atualizar
+          <button onClick={() => navigate('/comissao')}>
+            Comissão de Inventário
           </button>
-
         </div>
-
       </div>
 
       {/* ======================================================
@@ -168,7 +152,7 @@ const EstoqueG = () => {
           />
 
           <button className="btn-primary" onClick={buscarItemExterno}>
-            🔍 Buscar
+            Buscar
           </button>
 
 

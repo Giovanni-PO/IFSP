@@ -23,7 +23,9 @@ const EstoqueLocal = () => {
   });
 
   useEffect(() => {
-    if (codigo) carregarEstoqueLocal();
+    if (codigo) {
+      carregarEstoqueLocal();
+    }
   }, [codigo]);
 
   useEffect(() => {
@@ -35,17 +37,29 @@ const EstoqueLocal = () => {
       setCarregando(true);
       setErro('');
 
-      const response = await fetch(`http://localhost:3000/locais/${codigo}/itens`);
-      if (!response.ok) throw new Error();
+      const response = await fetch(
+        `http://localhost:3000/locais/${codigo}/itens`
+      );
+
+      if (!response.ok) {
+        throw new Error();
+      }
 
       const data = await response.json();
+
       setItens(data);
       setItensFiltrados(data);
 
-      const localResp = await fetch('http://localhost:3000/locais');
+      const localResp = await fetch(
+        'http://localhost:3000/locais'
+      );
+
       const locaisData = await localResp.json();
 
-      const local = locaisData.find(l => l.codigo === codigo);
+      const local = locaisData.find(
+        l => l.codigo === codigo
+      );
+
       setLocalizacao(local);
 
     } catch {
@@ -56,24 +70,37 @@ const EstoqueLocal = () => {
   };
 
   const filtrarItens = () => {
-    if (!filtroNome) return setItensFiltrados(itens);
+    const filtro = filtroNome.trim().toUpperCase();
 
-    setItensFiltrados(
-      itens.filter(item =>
-        item.codigo.toLowerCase().includes(filtroNome.toLowerCase()) ||
-        item.nome.toLowerCase().includes(filtroNome.toLowerCase())
-      )
+    if (!filtro) {
+      setItensFiltrados(itens);
+      return;
+    }
+
+    const resultado = itens.filter(item =>
+      item.codigo.toUpperCase().includes(filtro)
     );
+
+    setItensFiltrados(resultado);
   };
 
   const buscarItemExterno = async () => {
-    if (!novoItem.codigo) return alert('Digite um código');
+    if (!novoItem.codigo) {
+      alert('Digite um código');
+      return;
+    }
 
     try {
-      const resp = await fetch(`http://localhost:3000/itens-externos/${novoItem.codigo}`);
+      const resp = await fetch(
+        `http://localhost:3000/itens-externos/${novoItem.codigo}`
+      );
+
       const data = await resp.json();
 
-      if (!resp.ok) return alert(data.erro);
+      if (!resp.ok) {
+        alert(data.erro);
+        return;
+      }
 
       setNovoItem({
         codigo: data.codigo,
@@ -87,37 +114,74 @@ const EstoqueLocal = () => {
   };
 
   const adicionarItem = async () => {
-    const resp = await fetch('http://localhost:3000/itens', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...novoItem, localizacao: codigo })
-    });
+    try {
+      const resp = await fetch(
+        'http://localhost:3000/itens',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ...novoItem,
+            localizacao: codigo
+          })
+        }
+      );
 
-    const data = await resp.json();
+      const data = await resp.json();
 
-    if (!resp.ok) return alert(data.erro);
+      if (!resp.ok) {
+        alert(data.erro);
+        return;
+      }
 
-    setNovoItem({
-      codigo: '',
-      etiqueta: false,
-      descricao: ''
-    });
+      setNovoItem({
+        codigo: '',
+        etiqueta: false,
+        descricao: ''
+      });
 
-    setMostrarFormulario(false);
-    carregarEstoqueLocal();
+      setMostrarFormulario(false);
+
+      carregarEstoqueLocal();
+
+    } catch {
+      alert('Erro ao adicionar item');
+    }
   };
 
   const deletarItem = async (id) => {
-    if (!window.confirm('Deseja deletar?')) return;
+    const confirmar = window.confirm(
+      'Deseja deletar este item?'
+    );
 
-    await fetch(`http://localhost:3000/itens/${id}`, {
-      method: 'DELETE'
-    });
+    if (!confirmar) {
+      return;
+    }
 
-    carregarEstoqueLocal();
+    try {
+      await fetch(
+        `http://localhost:3000/itens/${id}`,
+        {
+          method: 'DELETE'
+        }
+      );
+
+      carregarEstoqueLocal();
+
+    } catch {
+      alert('Erro ao deletar item');
+    }
   };
 
-  if (carregando) return <div className="loading"><h1>Carregando...</h1></div>;
+  if (carregando) {
+    return (
+      <div className="loading">
+        <h1>Carregando...</h1>
+      </div>
+    );
+  }
 
   return (
     <div className="home-container">
@@ -133,98 +197,143 @@ const EstoqueLocal = () => {
         </div>
 
         <div className="header-right">
-          <button className="menu-btn" onClick={() => setMenuAberto(true)}>☰</button>
+          <button
+            className="menu-btn"
+            onClick={() => setMenuAberto(true)}
+          >
+            ☰
+          </button>
         </div>
       </header>
 
       <div className={`side-menu-overlay ${menuAberto ? 'active' : ''}`} onClick={() => setMenuAberto(false)}>
         <div className={`side-menu ${menuAberto ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
           <button className="close-btn" onClick={() => setMenuAberto(false)}>×</button>
-          <button onClick={() => navigate('/')}>🏠 Home</button>
-          <button onClick={() => navigate('/estoque')}>📦 Geral</button>
-          <button onClick={carregarEstoqueLocal}>🔄 Atualizar</button>
+          <h3>Menu</h3>
+          <button onClick={() => navigate('/')}>
+            Home
+          </button>
+
+          <button onClick={() => navigate('/estoque')}>
+            Estoque Geral
+          </button>
+
+          <button onClick={() => navigate('/comissao')}>
+            Comissão de Inventário
+          </button>
         </div>
       </div>
 
       {localizacao && (
         <div className="form-box">
-          <h3 className="form-title">{localizacao.definicao}</h3>
-          <p>Total de itens: {itensFiltrados.length}</p>
 
-          <button className="btn-primary" onClick={() => setMostrarFormulario(!mostrarFormulario)}>
-            {mostrarFormulario ? '❌ Cancelar' : '➕ Adicionar Item'}
+          <h3 className="form-title">
+            {localizacao.definicao}
+          </h3>
+
+          <p>
+            Total de itens: {itensFiltrados.length}
+          </p>
+
+          <button
+            className="btn-primary"
+            onClick={() =>
+              setMostrarFormulario(!mostrarFormulario)
+            }
+          >
+            {mostrarFormulario
+              ? 'Cancelar'
+              : 'Adicionar Item'}
           </button>
 
           {mostrarFormulario && (
             <div className="form-box">
 
-        <h3 className="form-title">
-          Adicionar Item
-        </h3>
+              <h3 className="form-title">
+                Adicionar Item
+              </h3>
 
-        <div className="form-grid">
+              <div className="form-grid">
 
-          <input
-            placeholder="Código"
-            value={novoItem.codigo}
-            onChange={(e) =>
-              setNovoItem({
-                ...novoItem,
-                codigo: e.target.value
-              })
-            }
-          />
+                <input
+                  placeholder="Código"
+                  value={novoItem.codigo}
+                  onChange={(e) =>
+                    setNovoItem({
+                      ...novoItem,
+                      codigo: e.target.value
+                    })
+                  }
+                />
 
-          <button className="btn-primary" onClick={buscarItemExterno}>
-            🔍 Buscar
-          </button>
+                <button
+                  className="btn-primary"
+                  onClick={buscarItemExterno}
+                >
+                  Buscar
+                </button>
 
+                <textarea
+                  className="escrita"
+                  value={novoItem.descricao}
+                  placeholder="Descrição"
+                  disabled
+                />
 
-          <textarea className='escrita' value={novoItem.descricao} placeholder="Descrição" disabled />
+                <div className="checkbox-modern">
+                  <input
+                    type="checkbox"
+                    checked={novoItem.etiqueta}
+                    onChange={(e) =>
+                      setNovoItem({
+                        ...novoItem,
+                        etiqueta: e.target.checked
+                      })
+                    }
+                  />
+                  <span>Possui etiqueta</span>
+                </div>
 
+                <button
+                  className="btn-primary"
+                  onClick={adicionarItem}
+                >
+                  Adicionar
+                </button>
 
-          {/* CHECKBOX PADRÃO IGUAL OUTRAS PÁGINAS */}
-          <div className="checkbox-modern">
-            <input
-              type="checkbox"
-              checked={novoItem.etiqueta}
-              onChange={(e) =>
-                setNovoItem({
-                  ...novoItem,
-                  etiqueta: e.target.checked
-                })
-              }
-            />
-            <span>Possui etiqueta</span>
-          </div>
+              </div>
 
-          <button className="btn-primary" onClick={adicionarItem}>
-            ➕ Adicionar
-          </button>
-
-        </div>
-
-      </div>
+            </div>
           )}
+
         </div>
       )}
 
-      {erro && <div className="erro">{erro}</div>}
+      {erro && (
+        <div className="erro">
+          {erro}
+        </div>
+      )}
 
       <div className="filters">
         <input
-          placeholder="Buscar item..."
+          placeholder="Buscar código..."
           value={filtroNome}
-          onChange={(e) => setFiltroNome(e.target.value)}
+          onChange={(e) =>
+            setFiltroNome(e.target.value)
+          }
         />
       </div>
 
       <div className="table-container">
 
         {itensFiltrados.length === 0 ? (
-          <div className="vazio">Nenhum item encontrado</div>
+          <div className="vazio">
+            Nenhum item encontrado
+          </div>
         ) : (
           <table className="inventory-table">
+
             <thead>
               <tr>
                 <th>ID</th>
@@ -240,10 +349,15 @@ const EstoqueLocal = () => {
                 <tr key={item.id}>
                   <td>{item.id}</td>
                   <td>{item.codigo}</td>
-                  <td>{item.etiqueta ? '✔' : '✖'}</td>
+                  <td>
+                    {item.etiqueta ? 'Sim' : 'Não'}
+                  </td>
                   <td>{item.descricao}</td>
                   <td>
-                    <button className="delete-btn" onClick={() => deletarItem(item.id)}>
+                    <button
+                      className="delete-btn"
+                      onClick={() => deletarItem(item.id)}
+                    >
                       🗑
                     </button>
                   </td>
