@@ -1,367 +1,895 @@
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
-const Joi = require("joi");
 
 const db = require("./db");
 
+
 const app = express();
+
 
 app.use(cors());
 app.use(express.json());
+
+
 
 /* =====================================================
    USUARIOS
 ===================================================== */
 
-// criar usuario
-app.post("/usuarios", async (req, res) => {
 
-  try {
+app.post("/usuarios", async(req,res)=>{
 
-    const schema = Joi.object({
-      nome_usuario: Joi.string().required(),
-      email: Joi.string().email().required(),
-      senha: Joi.string().min(6).required()
-    });
+try{
 
-    const { error } = schema.validate(req.body);
 
-    if (error) {
+const {
+nome_usuario,
+email,
+senha
+}=req.body;
 
-      return res.status(400).json({
-        erro: error.details[0].message
-      });
-    }
 
-    const {
-      nome_usuario,
-      email,
-      senha
-    } = req.body;
+const hash = await bcrypt.hash(senha,10);
 
-    const hash = await bcrypt.hash(senha, 10);
 
-    await db.execute(
-      "INSERT INTO Usuarios (nome_usuario,email,senha) VALUES (?,?,?)",
-      [nome_usuario, email, hash]
-    );
 
-    res.json({
-      mensagem: "usuario criado"
-    });
+await db.execute(
 
-  } catch (err) {
+`
+INSERT INTO Usuarios
+(nome_usuario,email,senha)
 
-    console.error(err);
+VALUES
+(?,?,?)
 
-    res.status(500).json({
-      erro: "erro interno"
-    });
-  }
+`,
+
+[
+nome_usuario,
+email,
+hash
+]
+
+);
+
+
+
+res.json({
+
+mensagem:"usuario criado"
+
 });
 
-// login
-app.post("/login", async (req, res) => {
 
-  try {
+}catch(err){
 
-    const { email, senha } = req.body;
+console.log(err);
 
-    const [rows] = await db.execute(
-      "SELECT * FROM Usuarios WHERE email=?",
-      [email]
-    );
 
-    if (rows.length === 0) {
+res.status(500).json({
 
-      return res.status(401).json({
-        erro: "usuario nao encontrado"
-      });
-    }
+erro:"erro criar usuario"
 
-    const usuario = rows[0];
-
-    const senhaValida = await bcrypt.compare(
-      senha,
-      usuario.senha
-    );
-
-    if (!senhaValida) {
-
-      return res.status(401).json({
-        erro: "senha incorreta"
-      });
-    }
-
-    res.json({
-      mensagem: "login realizado",
-      usuario: usuario.nome_usuario
-    });
-
-  } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({
-      erro: "erro login"
-    });
-  }
 });
+
+
+}
+
+});
+
+
+
+
+
+app.post("/login", async(req,res)=>{
+
+
+try{
+
+
+const {
+email,
+senha
+}=req.body;
+
+
+
+const [rows] = await db.execute(
+
+"SELECT * FROM Usuarios WHERE email=?",
+
+[email]
+
+);
+
+
+
+if(rows.length===0){
+
+return res.status(401).json({
+
+erro:"usuario nao encontrado"
+
+});
+
+}
+
+
+
+const usuario = rows[0];
+
+
+
+const valido = await bcrypt.compare(
+
+senha,
+
+usuario.senha
+
+);
+
+
+
+if(!valido){
+
+return res.status(401).json({
+
+erro:"senha incorreta"
+
+});
+
+}
+
+
+
+res.json({
+
+mensagem:"login realizado",
+
+usuario:usuario.nome_usuario
+
+});
+
+
+
+
+}catch(err){
+
+console.log(err);
+
+
+res.status(500).json({
+
+erro:"erro login"
+
+});
+
+
+}
+
+
+
+});
+
+
+
+
+
 
 /* =====================================================
    LOCAIS
 ===================================================== */
 
-// listar locais
-app.get("/locais", async (req, res) => {
 
-  try {
 
-    const [rows] = await db.execute(
-      "SELECT * FROM Locais"
-    );
+app.get("/locais", async(req,res)=>{
 
-    res.json(rows);
 
-  } catch (err) {
+try{
 
-    console.error(err);
 
-    res.status(500).json({
-      erro: "erro locais"
-    });
-  }
+const [rows] = await db.execute(
+
+"SELECT * FROM Locais"
+
+);
+
+
+res.json(rows);
+
+
+
+}catch(err){
+
+
+console.log(err);
+
+
+res.status(500).json({
+
+erro:"erro locais"
+
 });
 
-// listar itens de um local
-app.get("/locais/:codigo/itens", async (req, res) => {
 
-  try {
+}
 
-    const codigo = req.params.codigo.toUpperCase();
 
-    const [rows] = await db.execute(`
-      SELECT *
-      FROM Itens
-      WHERE localizacao = ?
-      ORDER BY id
-    `, [codigo]);
 
-    res.json(rows);
-
-  } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({
-      erro: "erro ao buscar itens do local"
-    });
-  }
 });
+
+
+
+
+
+
 
 /* =====================================================
    ITENS EXTERNOS
 ===================================================== */
 
-// buscar item externo pelo codigo
-app.get("/itens-externos/:codigo", async (req, res) => {
 
-  try {
 
-    const codigo = req.params.codigo.toUpperCase();
+app.get("/itens-externos/:codigo", async(req,res)=>{
 
-    const [rows] = await db.execute(
-      "SELECT * FROM ItensExternos WHERE codigo=?",
-      [codigo]
-    );
 
-    if (rows.length === 0) {
+try{
 
-      return res.status(404).json({
-        erro: "item nao encontrado"
-      });
-    }
 
-    res.json(rows[0]);
+const codigo =
+req.params.codigo.toUpperCase();
 
-  } catch (err) {
 
-    console.error(err);
 
-    res.status(500).json({
-      erro: "erro item externo"
-    });
-  }
+const [rows] = await db.execute(
+
+"SELECT * FROM ItensExternos WHERE codigo=?",
+
+[codigo]
+
+);
+
+
+
+if(rows.length===0){
+
+return res.status(404).json({
+
+erro:"item externo nao encontrado"
+
 });
+
+}
+
+
+
+res.json(rows[0]);
+
+
+
+}catch(err){
+
+console.log(err);
+
+
+res.status(500).json({
+
+erro:"erro item externo"
+
+});
+
+
+}
+
+
+});
+
+
+
+
+
+
+
+
 
 /* =====================================================
    ITENS
 ===================================================== */
 
-// listar todos itens
-app.get("/itens", async (req, res) => {
 
-  try {
 
-    const [rows] = await db.execute(`
-      SELECT 
-        Itens.*,
-        Locais.definicao AS local
-      FROM Itens
-      JOIN Locais
-      ON Itens.localizacao = Locais.codigo
-      ORDER BY Itens.id
-    `);
 
-    res.json(rows);
 
-  } catch (err) {
+// listar todos
 
-    console.error(err);
+app.get("/itens", async(req,res)=>{
 
-    res.status(500).json({
-      erro: "erro itens"
-    });
-  }
+
+try{
+
+
+const [rows] = await db.execute(`
+
+SELECT
+
+Itens.*,
+
+Locais.definicao AS local
+
+
+FROM Itens
+
+
+LEFT JOIN Locais
+
+ON Itens.localizacao = Locais.codigo
+
+
+ORDER BY Itens.id
+
+
+`);
+
+
+
+res.json(rows);
+
+
+
+}catch(err){
+
+
+console.log(err);
+
+
+res.status(500).json({
+
+erro:"erro listar itens"
+
 });
+
+
+}
+
+
+
+});
+
+
+
+
+
+
+
+
+
+// buscar itens por local
+
+app.get("/locais/:codigo/itens", async(req,res)=>{
+
+
+try{
+
+
+const codigo =
+req.params.codigo.toUpperCase();
+
+
+
+const [rows] = await db.execute(`
+
+
+SELECT *
+
+FROM Itens
+
+
+WHERE
+
+localizacao=?
+
+
+OR campus_carga=?
+
+
+OR campus_responsavel=?
+
+
+
+ORDER BY id
+
+
+
+`,
+[
+codigo,
+codigo,
+codigo
+]
+
+);
+
+
+
+res.json(rows);
+
+
+
+}catch(err){
+
+console.log(err);
+
+
+res.status(500).json({
+
+erro:"erro buscar local"
+
+});
+
+
+}
+
+
+});
+
+
+
+
+
+
+
+
+
+// buscar por id
+
+
+app.get("/itens/:id", async(req,res)=>{
+
+
+try{
+
+
+const [rows]=await db.execute(
+
+"SELECT * FROM Itens WHERE id=?",
+
+[req.params.id]
+
+);
+
+
+
+if(rows.length===0){
+
+return res.status(404).json({
+
+erro:"item nao encontrado"
+
+});
+
+}
+
+
+
+res.json(rows[0]);
+
+
+
+}catch(err){
+
+
+console.log(err);
+
+
+res.status(500).json({
+
+erro:"erro buscar item"
+
+});
+
+
+}
+
+
+
+});
+
+
+
+
+
+
+
+
 
 // criar item
-app.post("/itens", async (req, res) => {
 
-  try {
 
-    const {
-      codigo,
-      etiqueta,
-      descricao,
-      localizacao
-    } = req.body;
+app.post("/itens", async(req,res)=>{
 
-    // validacao
-    if (
-      !codigo ||
-      !localizacao
-    ) {
 
-      return res.status(400).json({
-        erro: "dados invalidos"
-      });
-    }
+try{
 
-    // verifica codigo duplicado
-    const [existe] = await db.execute(
-      "SELECT * FROM Itens WHERE codigo=?",
-      [codigo]
-    );
 
-    if (existe.length > 0) {
+const dados = req.body;
 
-      return res.status(400).json({
-        erro: "codigo ja cadastrado"
-      });
-    }
 
-    // inserir item
-    await db.execute(
-      `INSERT INTO Itens
-      (
-        codigo,
-        etiqueta,
-        descricao,
-        localizacao
-      )
-      VALUES (?,?,?,?)`,
-      [
-        codigo,
-        etiqueta,
-        descricao,
-        localizacao
-      ]
-    );
 
-    res.json({
-      mensagem: "item criado"
-    });
+if(!dados.numero && !dados.codigo){
 
-  } catch (err) {
+return res.status(400).json({
 
-    console.error(err);
+erro:"numero ou codigo obrigatorio"
 
-    res.status(500).json({
-      erro: "erro criar item"
-    });
-  }
 });
+
+}
+
+
+
+
+if(dados.numero){
+
+
+const [existe] = await db.execute(
+
+"SELECT id FROM Itens WHERE numero=?",
+
+[dados.numero]
+
+);
+
+
+
+if(existe.length){
+
+return res.status(400).json({
+
+erro:"numero ja cadastrado"
+
+});
+
+}
+
+
+}
+
+
+
+
+
+await db.execute(`
+
+
+INSERT INTO Itens
+
+(
+
+codigo,
+
+etiqueta,
+
+descricao,
+
+localizacao,
+
+
+numero,
+
+status,
+
+ed,
+
+rotulos,
+
+carga_atual,
+
+setor_responsavel,
+
+campus_responsavel,
+
+campus_carga,
+
+valor,
+
+numero_nota_fiscal,
+
+data_entrada,
+
+data_carga,
+
+fornecedor,
+
+sala,
+
+estado_conservacao,
+
+numero_serie
+
+
+)
+
+
+VALUES
+
+(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+
+
+`,
+
+
+[
+
+
+dados.codigo || null,
+
+dados.etiqueta || 0,
+
+dados.descricao || null,
+
+dados.localizacao || null,
+
+
+dados.numero || null,
+
+dados.status || "ativo",
+
+dados.ed || null,
+
+dados.rotulos || null,
+
+dados.carga_atual || null,
+
+dados.setor_responsavel || null,
+
+dados.campus_responsavel || null,
+
+dados.campus_carga || null,
+
+dados.valor || null,
+
+dados.numero_nota_fiscal || null,
+
+dados.data_entrada || null,
+
+dados.data_carga || null,
+
+dados.fornecedor || null,
+
+dados.sala || null,
+
+dados.estado_conservacao || null,
+
+dados.numero_serie || null
+
+
+]
+
+);
+
+
+
+
+res.json({
+
+mensagem:"item criado"
+
+});
+
+
+
+}catch(err){
+
+console.log(err);
+
+
+res.status(500).json({
+
+erro:"erro criar item"
+
+});
+
+
+}
+
+
+
+});
+
+
+
+
+
+
+
+
 
 // atualizar item
-app.put("/itens/:id", async (req, res) => {
 
-  try {
 
-    const {
-      descricao
-    } = req.body;
+app.put("/itens/:id", async(req,res)=>{
 
-    await db.execute(
-      `UPDATE Itens
-      SET
-        descricao=?
-      WHERE id=?`,
-      [
-        descricao,
-        req.params.id
-      ]
-    );
 
-    res.json({
-      mensagem: "item atualizado"
-    });
+try{
 
-  } catch (err) {
 
-    console.error(err);
+const d=req.body;
 
-    res.status(500).json({
-      erro: "erro atualizar"
-    });
-  }
+
+
+await db.execute(`
+
+
+UPDATE Itens
+
+SET
+
+
+numero=?,
+
+status=?,
+
+descricao=?,
+
+localizacao=?,
+
+rotulos=?,
+
+carga_atual=?,
+
+sala=?,
+
+estado_conservacao=?,
+
+numero_serie=?
+
+
+
+WHERE id=?
+
+
+
+`,
+
+[
+
+
+d.numero,
+
+d.status,
+
+d.descricao,
+
+d.localizacao,
+
+d.rotulos,
+
+d.carga_atual,
+
+d.sala,
+
+d.estado_conservacao,
+
+d.numero_serie,
+
+
+req.params.id
+
+
+]
+
+);
+
+
+
+res.json({
+
+mensagem:"item atualizado"
+
 });
 
-// deletar item
-app.delete("/itens/:id", async (req, res) => {
 
-  try {
 
-    await db.execute(
-      "DELETE FROM Itens WHERE id=?",
-      [req.params.id]
-    );
+}catch(err){
 
-    res.json({
-      mensagem: "item removido"
-    });
 
-  } catch (err) {
+console.log(err);
 
-    console.error(err);
 
-    res.status(500).json({
-      erro: "erro deletar"
-    });
-  }
+res.status(500).json({
+
+erro:"erro atualizar"
+
 });
+
+
+}
+
+
+
+});
+
+
+
+
+
+
+
+
+
+// deletar
+
+
+app.delete("/itens/:id", async(req,res)=>{
+
+
+try{
+
+
+await db.execute(
+
+"DELETE FROM Itens WHERE id=?",
+
+[req.params.id]
+
+);
+
+
+
+res.json({
+
+mensagem:"item removido"
+
+});
+
+
+
+}catch(err){
+
+
+console.log(err);
+
+
+res.status(500).json({
+
+erro:"erro deletar"
+
+});
+
+
+}
+
+
+
+});
+
+
+
+
+
+
+
 
 /* =====================================================
    SERVIDOR
 ===================================================== */
 
-app.listen(3000, () => {
 
-  console.log(`
-========================================
-Servidor rodando:
+app.listen(3000,()=>{
+
+
+console.log(`
+
+====================================
+
+Servidor rodando
+
 http://localhost:3000
-========================================
-  `);
+
+====================================
+
+`);
+
+
 });
