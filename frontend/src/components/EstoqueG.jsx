@@ -25,16 +25,20 @@ const EstoqueG = () => {
   }, []);
 
   const carregarDados = async () => {
+
     const respItens = await fetch('http://localhost:3000/itens');
     const itensData = await respItens.json();
+
     setItens(itensData);
 
     const respLocais = await fetch('http://localhost:3000/locais');
     const locaisData = await respLocais.json();
+
     setLocais(locaisData);
   };
 
   const buscarItemExterno = async () => {
+
     const resp = await fetch(
       `http://localhost:3000/itens-externos/${novoItem.codigo}`
     );
@@ -55,9 +59,12 @@ const EstoqueG = () => {
   };
 
   const adicionarItem = async () => {
+
     const resp = await fetch('http://localhost:3000/itens', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(novoItem)
     });
 
@@ -69,10 +76,12 @@ const EstoqueG = () => {
     }
 
     alert('Item criado');
+
     carregarDados();
   };
 
   const deletarItem = async (id) => {
+
     await fetch(`http://localhost:3000/itens/${id}`, {
       method: 'DELETE'
     });
@@ -80,10 +89,16 @@ const EstoqueG = () => {
     carregarDados();
   };
 
-  const itensFiltrados = itens.filter(item =>
-    item.codigo.toLowerCase().includes(filtroNome.toLowerCase()) ||
-    item.descricao.toLowerCase().includes(filtroNome.toLowerCase())
-  );
+  const itensFiltrados = itens.filter(item => {
+    const codigo = String(item.codigo || '').toLowerCase();
+    const descricao = String(item.descricao || '').toLowerCase();
+    const filtro = filtroNome.toLowerCase();
+  
+    return (
+      codigo.includes(filtro) ||
+      descricao.includes(filtro)
+    );
+  });
 
   return (
     <div className="home-container">
@@ -95,37 +110,68 @@ const EstoqueG = () => {
       <header className="header">
 
         <div className="header-left">
-          <img src="/LogoIFSP.jpg" alt="Logo" />
+
+          <img
+            src="/LogoIFSP.jpg"
+            alt="Logo"
+          />
+
           <h1>IFSP</h1>
+
         </div>
 
         <div className="header-center">
+
           <h2>Estoque Geral</h2>
+
         </div>
 
         <div className="header-right">
+
           <button
             className="menu-btn"
             onClick={() => setMenuAberto(true)}
           >
             ☰
           </button>
+
         </div>
 
       </header>
 
+      {/* ======================================================
+          MENU LATERAL
+      ====================================================== */}
 
-      <div className={`side-menu-overlay ${menuAberto ? 'active' : ''}`} onClick={() => setMenuAberto(false)}>
-        <div className={`side-menu ${menuAberto ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
-          <button className="close-btn" onClick={() => setMenuAberto(false)}>×</button>
+      <div
+        className={`side-menu-overlay ${menuAberto ? 'active' : ''}`}
+        onClick={() => setMenuAberto(false)}
+      >
+
+        <div
+          className={`side-menu ${menuAberto ? 'active' : ''}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+
+          <button
+            className="close-btn"
+            onClick={() => setMenuAberto(false)}
+          >
+            ×
+          </button>
+
           <h3>Menu</h3>
+
           <button onClick={() => navigate('/')}>
             Home
           </button>
+
           <button onClick={() => navigate('/comissao')}>
             Comissão de Inventário
           </button>
+
         </div>
+
       </div>
 
       {/* ======================================================
@@ -151,12 +197,18 @@ const EstoqueG = () => {
             }
           />
 
-          <button className="btn-primary" onClick={buscarItemExterno}>
+          <button
+            className="btn-primary"
+            onClick={buscarItemExterno}
+          >
             Buscar
           </button>
 
-
-          <textarea value={novoItem.descricao} placeholder="Descrição" disabled />
+          <textarea
+            value={novoItem.descricao}
+            placeholder="Descrição"
+            disabled
+          />
 
           <select
             value={novoItem.localizacao}
@@ -167,17 +219,26 @@ const EstoqueG = () => {
               })
             }
           >
-            <option value="">Selecione Local</option>
+
+            <option value="">
+              Selecione Local
+            </option>
 
             {locais.map(local => (
-              <option key={local.codigo} value={local.codigo}>
+              <option
+                key={local.codigo}
+                value={local.codigo}
+              >
                 {local.codigo}
               </option>
             ))}
+
           </select>
 
           {/* CHECKBOX PADRÃO IGUAL OUTRAS PÁGINAS */}
+
           <div className="checkbox-modern">
+
             <input
               type="checkbox"
               checked={novoItem.etiqueta}
@@ -188,10 +249,17 @@ const EstoqueG = () => {
                 })
               }
             />
-            <span>Possui etiqueta</span>
+
+            <span>
+              Possui etiqueta
+            </span>
+
           </div>
 
-          <button className="btn-primary" onClick={adicionarItem}>
+          <button
+            className="btn-primary"
+            onClick={adicionarItem}
+          >
             ➕ Adicionar
           </button>
 
@@ -204,11 +272,13 @@ const EstoqueG = () => {
       ====================================================== */}
 
       <div className="filters">
+
         <input
           placeholder="Buscar item..."
           value={filtroNome}
           onChange={(e) => setFiltroNome(e.target.value)}
         />
+
       </div>
 
       {/* ======================================================
@@ -220,6 +290,7 @@ const EstoqueG = () => {
         <table className="inventory-table">
 
           <thead>
+
             <tr>
               <th>ID</th>
               <th>Código</th>
@@ -228,26 +299,48 @@ const EstoqueG = () => {
               <th>Local</th>
               <th>Ações</th>
             </tr>
+
           </thead>
 
           <tbody>
 
             {itensFiltrados.map(item => (
+
               <tr key={item.id}>
-                <td>{item.id}</td>
-                <td>{item.codigo}</td>
-                <td>{item.descricao}</td>
-                <td>{item.etiqueta ? '✔' : '✖'}</td>
-                <td>{item.local}</td>
+
                 <td>
+                  {item.id}
+                </td>
+
+                <td>
+                  {item.codigo}
+                </td>
+
+                <td>
+                  {item.descricao}
+                </td>
+
+                <td>
+                  {item.etiqueta ? '✔' : '✖'}
+                </td>
+
+                <td>
+                  {item.local}
+                </td>
+
+                <td>
+
                   <button
                     className="delete-btn"
                     onClick={() => deletarItem(item.id)}
                   >
                     🗑
                   </button>
+
                 </td>
+
               </tr>
+
             ))}
 
           </tbody>
